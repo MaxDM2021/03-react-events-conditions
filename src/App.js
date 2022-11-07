@@ -6,13 +6,20 @@ import ColorPicker from "./components/ColorPicker";
 import TodoList from "./components/Todolist";
 import TodoEditor from "./components/TodoEditor";
 import Filter from "./components/Filter";
+import IconButton from "./components/IconButton";
+
+import { ReactComponent as AddIcon } from "./components/icons/add.svg";
+
 import initialTodos from "./todos.json";
 
 import LoginForm from "./components/LoginForm";
 
-import ProductReviewForm from "./components/ProductReviewForm"
+import ProductReviewForm from "./components/ProductReviewForm";
 
-import { GlobalStyle } from "./GlobalStyle";
+import Modal from "./components/Modal";
+import Clock from "./components/Clock";
+import Tabs from "./components/Tabs";
+import tabs from "./tabs.json";
 
 const colorPickerOptions = [
   { label: "red", color: "#F44336" },
@@ -25,9 +32,49 @@ const colorPickerOptions = [
 
 class App extends Component {
   state = {
-    todos: initialTodos,
+    todos: [],
     filter: "",
+    showModal: false,
+    showClock: false,
   };
+
+  // ===== Методы жизненных циклов ======
+
+  componentDidMount() {
+    // console.log('App componentDidMount');
+
+    const todos = localStorage.getItem("todos");
+    const parsedTodos = JSON.parse(todos);
+
+    if (parsedTodos) {
+      this.setState({ todos: parsedTodos });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // console.log('App componentDidUpdate');
+
+const nextTodos = this.state.todos;
+const prevTodos = prevState.todos;
+
+
+    if (nextTodos !== prevTodos) {
+      console.log("Обновилось поле todos, записываю todos в хранилище");
+
+      localStorage.setItem("todos", JSON.stringify( nextTodos ));
+    }
+
+// Вариант **2 закрывания окна после ввода данных
+
+if ( nextTodos.length > prevTodos.length && prevTodos.length !== 0){
+  this.toggleModal();
+} 
+}
+
+
+  // ===== Методы циклов END ======
+
+  // ===== Кастомные методы =====
 
   addTodo = (text) => {
     console.log(text);
@@ -40,6 +87,11 @@ class App extends Component {
     this.setState(({ todos }) => ({
       todos: [todo, ...todos],
     }));
+
+// Вариант **1 закрывания окна после ввода данных
+
+    // this.toggleModal();
+
   };
 
   deleteTodo = (todoId) => {
@@ -90,18 +142,34 @@ class App extends Component {
     );
   };
 
-
   calculateComletedTodos = () => {
-  const { todos } = this.state
+    const { todos } = this.state;
 
-  return todos.reduce(
-    (acc, todo) => (todo.comleted ? acc + 1 : acc),
-    0
-  );
-  }
+    return todos.reduce((acc, todo) => (todo.comleted ? acc + 1 : acc), 0);
+  };
+
+  // ======Modal-open-close========
+
+  toggleModal = () => {
+    this.setState(({ showModal }) => ({
+      showModal: !showModal,
+    }));
+  };
+
+  // ======Modal-END========
+
+  // ======Clock l-open-close========
+
+  toggleClock = () => {
+    this.setState(({ showClock }) => ({
+      showClock: !showClock,
+    }));
+  };
+
+  // ======Modal-END========
 
   render() {
-    const { todos, filter } = this.state;
+    const { todos, filter, showModal, showClock } = this.state;
     const totalTodosCount = todos.length;
     const comletedTodosCount = this.calculateComletedTodos();
 
@@ -114,11 +182,15 @@ class App extends Component {
         <Dropdown />
         <ColorPicker options={colorPickerOptions} />
 
+        <IconButton onClick={this.toggleModal} arial-lable="Добавить todo">
+          <AddIcon width="40" height="40" fill="#fff" />
+        </IconButton>
+
         <div>
           <p>Общее кол-во: {totalTodosCount}</p>
           <p>Количество выполненных: {comletedTodosCount} </p>
         </div>
-        <TodoEditor onSubmit={this.addTodo} />
+       
 
         <Filter value={filter} onChange={this.changeFilter} />
 
@@ -128,10 +200,38 @@ class App extends Component {
           onToggleCompleted={this.toggleCompleted}
         />
 
-        <LoginForm/>
-        <ProductReviewForm/>
-{/* 
-        <GlobalStyle /> */}
+        <LoginForm />
+        <ProductReviewForm />
+        <button type="button" onClick={this.toggleModal}>
+          Открыть модальное окно
+        </button>
+        {showModal && (
+          <Modal onClose={this.toggleModal}>
+
+
+<TodoEditor onSubmit={this.addTodo} />
+
+
+
+            {/* <h1>Привет это контент модалки как children</h1>
+            <p>
+              В графстве Фингал в Ирландии появились зарядные станции для
+              электромобилей, встроенные в фонарные столбы. Таким образом,
+              энергия поступает прямо из городских электросистем, не требуя
+              дополнительного оборудования.
+            </p>
+            <button type="button" onClick={this.toggleModal}>
+              Закрыть
+            </button> */}
+          </Modal>
+        )}
+        {showClock && <Clock />}
+        <button type="button" onClick={this.toggleClock}>
+          Открыть/Скрыть таймер
+        </button>
+        <Tabs items={tabs} />
+
+   
       </>
     );
   }
